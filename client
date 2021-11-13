@@ -1,0 +1,70 @@
+#!/usr/bin/python3
+
+from Crypto.PublicKey import RSA
+import socket
+from random import randint
+import random
+from colorama import Fore, Back, Style
+import hashlib
+import time
+
+def energyTrading():
+
+    host = '127.0.1.1'
+    port = 1365
+    ClientSocket = socket.socket() # make connection
+    try:
+        ClientSocket.connect((host, port))
+    except socket.error as e:
+            print(str(e))
+
+    energy_storageSystem = []
+    purchased = []
+    demands = 140 #Kw
+
+    i = 0
+    print()
+    print(Fore.BLUE + "Simulating Energy trading in Hyperledger Network... >>> Enabled ")
+    print()
+
+    while i <=6:
+
+        string_ip = str(i).encode()
+        encrypting_ip = hashlib.sha256(string_ip).hexdigest()
+        ClientSocket.send(str.encode(encrypting_ip))
+        print(Fore.WHITE + "Client ID is: " + encrypting_ip)
+
+        producedEnergy = randint(1, 300) #Kw
+        print(Fore.YELLOW + f"[PRODUCED ENERGY--] {producedEnergy}Kw Energy is generated.\n")
+
+        if producedEnergy > demands:
+            extraEnergy = producedEnergy - demands
+            print(Fore.GREEN+ f"[ENERGY ADDED--] {extraEnergy}Kw added to ESS!")
+
+        if extraEnergy > 0:
+            energy_storageSystem.append(extraEnergy)
+            str_extraenergy = str(extraEnergy)
+            ClientSocket.send(str.encode(str_extraenergy)) # send extra Energy to ESS
+            # Should send extraEnergy to database
+            print(Fore.CYAN + "[STATUS--] ESS Status is: ", energy_storageSystem)
+        
+        if len(energy_storageSystem) > 1:
+            toBePurchased = random.choice(energy_storageSystem) # pick required amount from energy_storageSystem
+            purchased.append(toBePurchased)
+            energy_storageSystem.remove(toBePurchased)
+
+            print(Fore.YELLOW + f"\nPURCHASED--] The {toBePurchased}Kw energy purchased from the ESS!")
+            print(Fore.YELLOW + "\n[NEW STATUS--] New Status is:", energy_storageSystem)
+
+            Input_2 = str(energy_storageSystem)
+            ClientSocket.send(str.encode(Input_2)) 
+
+        if len(energy_storageSystem) < 1:
+            print(Fore.YELLOW + "...[NO ENERGY!!] No energy available for sale.")
+        else:
+            print(Fore.RESET + f"\n ESS has {sum(energy_storageSystem)}Kw to sell!")
+
+        i = i+1
+        time.sleep(3)
+
+energyTrading()

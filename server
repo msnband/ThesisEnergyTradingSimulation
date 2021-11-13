@@ -1,0 +1,38 @@
+#!/usr/bin/python3
+
+import socket
+import os
+from _thread import *
+import hashlib
+
+ServerSocket = socket.socket()
+host = socket.gethostbyname(socket.gethostname())
+
+port = 1365
+ThreadCount = 0
+commingData = []
+node_id_hash = []
+
+try:
+    ServerSocket.bind((host, port))
+except socket.error as e:
+    print(str(e))
+
+print('Peer-to-peer network is ready...')
+ServerSocket.listen(100)
+
+def threaded_client(connection):
+
+    while True:
+        data = connection.recv(1048576)
+        commingData.append(data)
+        print(str(commingData))
+        if not data:
+            break
+
+while True:
+    Client, address = ServerSocket.accept()
+    print('Connected to: ' + address[0] + ':' + str(address[1]))
+    start_new_thread(threaded_client, (Client, ))
+    ThreadCount += 1
+    print(f"Node Number {ThreadCount} is connected")
