@@ -7,64 +7,111 @@ import random
 from colorama import Fore, Back, Style
 import hashlib
 import time
+import os
+import subprocess
 
 def energyTrading():
-
-    host = '127.0.1.1'
-    port = 1365
-    ClientSocket = socket.socket() # make connection
     try:
-        ClientSocket.connect((host, port))
-    except socket.error as e:
-            print(str(e))
 
-    energy_storageSystem = []
-    purchased = []
-    demands = 140 #Kw
+        host = '127.0.1.1'
+        port = 1365
+        ClientSocket = socket.socket() # make connection
+        try:
+            ClientSocket.connect((host, port))
+        except socket.error as e:
+                print(str(e))
 
-    i = 0
-    print()
-    print(Fore.BLUE + "Simulating Energy trading in Hyperledger Network... >>> Enabled ")
-    print()
+        energy_storageSystem = []
+        purchased = []
+        demands = 140 #Kw
+        extraEnergy = 0
 
-    while i <=6:
+        i = 1
+        print("         +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+        print(                      "Simulating Energy trading in Hyperledger Network ... Enabled\n")
+        print("         +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+        time.sleep(3)
 
-        string_ip = str(i).encode()
-        encrypting_ip = hashlib.sha256(string_ip).hexdigest()
-        ClientSocket.send(str.encode(encrypting_ip))
-        print(Fore.WHITE + "Client ID is: " + encrypting_ip)
+        cmd = "/home/moab19/HyperledgerFabric/fabric-samples/test-network"
+        os.chdir(cmd)
+        os.system("./network.sh up createChannel -s couchdb")
+        print(Fore.LIGHTGREEN_EX + "\nNetwork is created with two peers.")
+        time.sleep(3)
 
-        producedEnergy = randint(1, 300) #Kw
-        print(Fore.YELLOW + f"[PRODUCED ENERGY--] {producedEnergy}Kw Energy is generated.\n")
+        print(Fore.LIGHTRED_EX + "\nNew peer trying to join the network. System is working on components for new peer...")
+        time.sleep(5)
+        newcmd = "/home/moab19/HyperledgerFabric/fabric-samples/test-network/addOrg3"
+        os.chdir(newcmd)
+        os.system("./addOrg3.sh up -c mychannel -s couchdb")
 
-        if producedEnergy > demands:
-            extraEnergy = producedEnergy - demands
-            print(Fore.GREEN+ f"[ENERGY ADDED--] {extraEnergy}Kw added to ESS!")
+        print(Fore.LIGHTGREEN_EX +  "\nA new peer added to network according to policy! Ready for Energy trading...")
+        cmd = "/home/moab19/HyperledgerFabric/fabric-samples/test-network"
+        os.chdir(cmd)
+        time.sleep(5)
 
-        if extraEnergy > 0:
-            energy_storageSystem.append(extraEnergy)
-            str_extraenergy = str(extraEnergy)
-            ClientSocket.send(str.encode(str_extraenergy)) # send extra Energy to ESS
-            # Should send extraEnergy to database
-            print(Fore.CYAN + "[STATUS--] ESS Status is: ", energy_storageSystem)
-        
-        if len(energy_storageSystem) > 1:
-            toBePurchased = random.choice(energy_storageSystem) # pick required amount from energy_storageSystem
-            purchased.append(toBePurchased)
-            energy_storageSystem.remove(toBePurchased)
+        while i <=5:
 
-            print(Fore.YELLOW + f"\nPURCHASED--] The {toBePurchased}Kw energy purchased from the ESS!")
-            print(Fore.YELLOW + "\n[NEW STATUS--] New Status is:", energy_storageSystem)
+            string_ip = str(i).encode()
+            encrypting_ip = hashlib.sha256(string_ip).hexdigest()
+            ClientSocket.send(str.encode(encrypting_ip))
+            print(Fore.WHITE + "\nClient ID is: " + encrypting_ip)
+            producedEnergy = randint(1, 300) #Kw
+            print(Fore.YELLOW + f"\n[PRODUCED ENERGY--] {producedEnergy}Kw Energy is generated.\n")
+
+
+            if producedEnergy > demands:
+                extraEnergy = producedEnergy - demands
+                print(Fore.GREEN+ f"[ENERGY ADDED--] {extraEnergy}Kw added to ESS!\n")
+
+            if extraEnergy > 0:
+                energy_storageSystem.append(extraEnergy)
+                str_extraenergy = str(extraEnergy)
+                ClientSocket.send(str.encode(str_extraenergy)) # send extra Energy to ESS
+                # Should send extraEnergy to database
+                print(Fore.CYAN + "[STATUS--] ESS Status is: ", energy_storageSystem)
+            
+            if len(energy_storageSystem) > 1:
+                toBePurchased = random.choice(energy_storageSystem) # Buy required amount of energy from energy_storageSystem
+                purchased.append(toBePurchased)
+                energy_storageSystem.remove(toBePurchased)
+                print(Fore.YELLOW + f"\n[PURCHASED--] The {toBePurchased}Kw energy purchased from the ESS!")
+                print(Fore.LIGHTMAGENTA_EX + f"\n[Chanicode--] Chaincode is packaged for transaction...")
+                print(Fore.YELLOW + "\n[NEW STATUS--] New Status is:", energy_storageSystem)
+
+            if len(energy_storageSystem) < 1:
+                print(Fore.YELLOW + "...[NO ENERGY!!] No energy available for sale.")
+            else:
+                print(Fore.RESET + f"\n ESS has {sum(energy_storageSystem)}Kw to sell!")
+
+            if i==5:
+                time.sleep(5)
+                print(Fore.LIGHTRED_EX + "\nDeploying chanincode for energy trading...\n")
+                time.sleep(8)
+                os.system('./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go -ccl go')
+                time.sleep(5)
+                print(Fore.GREEN + "\nChaicodes approved by 2 peers...!\n")
+                print(Fore.GREEN + "\n\nTransacations status: Confirmed!\n")
+                time.sleep(5)
+                print(Fore.RESET + "Showing containers status:\n")
+                os.system("docker ps -a")
 
             Input_2 = str(energy_storageSystem)
             ClientSocket.send(str.encode(Input_2)) 
 
-        if len(energy_storageSystem) < 1:
-            print(Fore.YELLOW + "...[NO ENERGY!!] No energy available for sale.")
-        else:
-            print(Fore.RESET + f"\n ESS has {sum(energy_storageSystem)}Kw to sell!")
+            time.sleep(2)
+            i = i+1
+        print("                                 --------------------------------------------------------------------------------------")
+        print("                                 --------------------------------------------------------------------------------------")
+        print(Fore.LIGHTGREEN_EX + "                                                        ++++  Transactions completed  ++++")
+        print("                                 --------------------------------------------------------------------------------------")
+        print("                                 --------------------------------------------------------------------------------------")
+        time.sleep(10)
 
-        i = i+1
-        time.sleep(3)
+    except UnboundLocalError:
+        os.system("./network.sh down")
+
 
 energyTrading()
+
+
+
