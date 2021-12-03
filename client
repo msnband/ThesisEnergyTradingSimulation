@@ -1,4 +1,8 @@
 #!/usr/bin/python3
+# Energy trading over Hyperledger Fabric network.
+
+# Mohammad Hossein Abdsharifi ---------------- moab19@student.bth.se
+# Ripan Kumar Dhar ----------- ridh19@student.bth.se
 
 from Crypto.PublicKey import RSA
 import socket
@@ -32,20 +36,20 @@ def energyTrading():
         print("         +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
         time.sleep(3)
 
-        cmd = "/home/moab19/HyperledgerFabric/fabric-samples/test-network"
+        cmd = "/home/moab19/HyperledgerFabric_v1/HyperledgerFabric/fabric-samples/test-network"
         os.chdir(cmd)
-        os.system("./network.sh up createChannel -s couchdb")
+        os.system("./network.sh up createChannel -ca -c mychannel -s couchdb")
         print(Fore.LIGHTGREEN_EX + "\nNetwork is created with two peers.")
         time.sleep(3)
 
-        print(Fore.LIGHTRED_EX + "\nNew peer trying to join the network. System is working on components for new peer...")
+        print(Fore.LIGHTRED_EX + "\nNew peer trying to join the network. System is preparing components for new peer...")
         time.sleep(5)
-        newcmd = "/home/moab19/HyperledgerFabric/fabric-samples/test-network/addOrg3"
+        newcmd = "/home/moab19/HyperledgerFabric_v1/HyperledgerFabric/fabric-samples/test-network/addOrg3"
         os.chdir(newcmd)
-        os.system("./addOrg3.sh up -c mychannel -s couchdb")
+        os.system("./addOrg3.sh up -ca -c mychannel -s couchdb")
 
         print(Fore.LIGHTGREEN_EX +  "\nA new peer added to network according to policy! Ready for Energy trading...")
-        cmd = "/home/moab19/HyperledgerFabric/fabric-samples/test-network"
+        cmd = "/home/moab19/HyperledgerFabric_v1/HyperledgerFabric/fabric-samples/test-network"
         os.chdir(cmd)
         time.sleep(5)
 
@@ -87,11 +91,28 @@ def energyTrading():
                 time.sleep(5)
                 print(Fore.LIGHTRED_EX + "\nDeploying chanincode for energy trading...\n")
                 time.sleep(8)
-                os.system('./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go -ccl go')
+                #os.system('./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go -ccl go')
+                os.system('./network.sh deployCC -ccn basic -ccp ../../mychaincode/ -ccl go')
                 time.sleep(5)
                 print(Fore.GREEN + "\nChaicodes approved by 2 peers...!\n")
                 print(Fore.GREEN + "\n\nTransacations status: Confirmed!\n")
                 time.sleep(5)
+
+
+            # To get the transactions confirmation from the CouchDB, execute the following commands sequently once the transactions completed:
+
+                # export PATH=${PWD}/../bin:$PATH
+                # export FABRIC_CFG_PATH=$PWD/../config/
+                # export CORE_PEER_TLS_ENABLED=true
+                # export CORE_PEER_LOCALMSPID="Org1MSP"
+                # export CORE_PEER_TLS_ROOTCERT_FILE=${PWD}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
+                # export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+                # export CORE_PEER_ADDRESS=localhost:7051
+
+                # peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n basic --peerAddresses localhost:7051 --tlsRootCertFiles ${PWD}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses localhost:9051 --tlsRootCertFiles ${PWD}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt -c '{"function":"CreateAsset","Args":["consumer","Electricity", "50", "sell"]}'
+                # peer chaincode query -C mychannel -n basic -c '{"Args":["ReadAsset","1"]}'
+                # peer chaincode query -C mychannel -n basic -c '{"Args":["GetAllAssets"]}'
+                
                 print(Fore.RESET + "Showing containers status:\n")
                 os.system("docker ps -a")
 
