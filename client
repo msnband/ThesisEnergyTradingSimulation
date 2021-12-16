@@ -31,29 +31,43 @@ def energyTrading():
         extraEnergy = 0
 
         i = 1
-        print("         +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-        print(                      "Simulating Energy trading in Hyperledger Network ... Enabled\n")
-        print("         +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-        time.sleep(3)
+
 
         cmd = "/home/moab19/HyperledgerFabric_v1/HyperledgerFabric/fabric-samples/test-network"
         os.chdir(cmd)
-        os.system("./network.sh up createChannel -ca -c mychannel -s couchdb")
-        print(Fore.LIGHTGREEN_EX + "\nNetwork is created with two peers.")
-        time.sleep(3)
-
-        print(Fore.LIGHTRED_EX + "\nNew peer trying to join the network. System is preparing components for new peer...")
+        print("\nVerifying the network configurations. Please wait...")
+        os.system("./network.sh down")
         time.sleep(5)
+        print("         +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+        print(                      "Simulating Energy trading in Hyperledger Network ... Enabled\n")
+        print("         +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+        time.sleep(4)
+        
+        os.system("./network.sh up createChannel -ca -c mychannel -s couchdb")
+        print(Fore.LIGHTGREEN_EX + "\nNetwork is created with two peers using certificate authority... Done.")
+        time.sleep(5)
+
+        print(Fore.LIGHTMAGENTA_EX + "\nNew peer trying to join the network. System is preparing components for new peer...")
+        time.sleep(10)
         newcmd = "/home/moab19/HyperledgerFabric_v1/HyperledgerFabric/fabric-samples/test-network/addOrg3"
         os.chdir(newcmd)
         os.system("./addOrg3.sh up -ca -c mychannel -s couchdb")
 
-        print(Fore.LIGHTGREEN_EX +  "\nA new peer added to network according to policy! Ready for Energy trading...")
+        print(Fore.LIGHTGREEN_EX +  "\nA new peer added to network according to policy! ... Done")
         cmd = "/home/moab19/HyperledgerFabric_v1/HyperledgerFabric/fabric-samples/test-network"
         os.chdir(cmd)
-        time.sleep(5)
+        time.sleep(15)
 
-        while i <=5:
+        print(Fore.LIGHTRED_EX + "\nDeploying main smart contract for registration...\n")
+        time.sleep(8)
+        #//os.system('./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go -ccl go')
+        os.system('./network.sh deployCC -ccn basic -ccp ../../mychaincode/ -ccl go')
+        time.sleep(5)
+        print(Fore.GREEN + "\nsmart contract approved by 2 peers...!\n")
+        print(Fore.GREEN + "\n\nChaincode Status: --->> Confirmed!\n")
+        time.sleep(7)
+
+        while i <=1:
 
             string_ip = str(i).encode()
             encrypting_ip = hashlib.sha256(string_ip).hexdigest()
@@ -87,16 +101,16 @@ def energyTrading():
             else:
                 print(Fore.RESET + f"\n ESS has {sum(energy_storageSystem)}Kw to sell!")
 
-            if i==5:
-                time.sleep(5)
-                print(Fore.LIGHTRED_EX + "\nDeploying chanincode for energy trading...\n")
-                time.sleep(8)
-                #os.system('./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go -ccl go')
-                os.system('./network.sh deployCC -ccn basic -ccp ../../mychaincode/ -ccl go')
-                time.sleep(5)
-                print(Fore.GREEN + "\nChaicodes approved by 2 peers...!\n")
-                print(Fore.GREEN + "\n\nTransacations status: Confirmed!\n")
-                time.sleep(5)
+            #if i==1:
+                #time.sleep(5)
+                #print(Fore.LIGHTRED_EX + "\nDeploying chanincode for energy trading...\n")
+                #time.sleep(8)
+                #//os.system('./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go -ccl go')
+                #os.system('./network.sh deployCC -ccn basic -ccp ../../mychaincode/ -ccl go')
+                #time.sleep(5)
+                #print(Fore.GREEN + "\nChaicodes approved by 2 peers...!\n")
+                #print(Fore.GREEN + "\n\nTransacations status: Confirmed!\n")
+                #time.sleep(7)
 
 
             # To get the transactions confirmation from the CouchDB, execute the following commands sequently once the transactions completed:
@@ -113,17 +127,24 @@ def energyTrading():
                 # peer chaincode query -C mychannel -n basic -c '{"Args":["ReadAsset","1"]}'
                 # peer chaincode query -C mychannel -n basic -c '{"Args":["GetAllAssets"]}'
                 
-                print(Fore.RESET + "Showing containers status:\n")
-                os.system("docker ps -a")
+                #print(Fore.RESET + "Showing containers status:\n")
+                #os.system("docker ps -a")
+
+            print(Fore.LIGHTGREEN_EX +  "\nEnergy trading is started on the network...")
+            cmd = "/home/moab19/HyperledgerFabric_v1/HyperledgerFabric/fabric-samples/test-network/api"
+            os.chdir(cmd)
+            time.sleep(3)
+            os.system('node api.js')
 
             Input_2 = str(energy_storageSystem)
             ClientSocket.send(str.encode(Input_2)) 
 
             time.sleep(2)
             i = i+1
+        os.system('rm -r wallet')
         print("                                 --------------------------------------------------------------------------------------")
         print("                                 --------------------------------------------------------------------------------------")
-        print(Fore.LIGHTGREEN_EX + "                                                        ++++  Transactions completed  ++++")
+        print(Fore.LIGHTGREEN_EX + "                                                       ++++  Transactions completed  ++++")
         print("                                 --------------------------------------------------------------------------------------")
         print("                                 --------------------------------------------------------------------------------------")
         time.sleep(10)
